@@ -16,10 +16,19 @@ class TrainingSequence:
         """Check if the training tab is open by looking for the training menu."""
         logging.info("Checking if the training tab is open.")
         return self.image.detect_image(self.adb, self.image_folder, "train_menu.png")
+    
+    def is_something_open(self) -> bool:
+        """Check if the training tab is open by looking for the training menu."""
+        logging.info("Checking if the training tab is open.")
+        return self.image.detect_image(self.adb, self.image_folder, "close.png")
 
     def train_troops(self):
         """Train troops by navigating the training menu and clicking train button."""
         logging.info("Starting troop training process.")
+        if not self.is_something_open():
+            logging.info("something is open, trying to close it")
+            self.image.find_and_click_image(self.adb, self.image_folder, "close.png")
+            
         
         # First check if we're already in the training tab
         if not self.is_training_tab_open():
@@ -83,7 +92,10 @@ class TrainingSequence:
                     # Second attempt at okay button
                     logging.info(f"Attempting second click on OK button (attempt {i+1}/3)")
                     self.image.find_and_click_image(self.adb, self.image_folder, "okay.png")
-                    
+                    # Small delay for UI update
+                    time.sleep(0.5)
+                    logging.info(f"Attempting second click on close button (attempt {i+1}/3)")
+                    self.image.find_and_click_image(self.adb, self.image_folder,"close.png")
                     # If we made it this far, we're probably done training
                     logging.info("Troops training sequence completed.")
                     return True

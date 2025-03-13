@@ -35,7 +35,7 @@ class ImageUtils:
             return None, 0.0
 
     def find_and_click_image(self, adb_utils, image_folder: str, image_name: str, 
-                             confidence_threshold=0.8, center_click=True) -> bool:
+                             confidence_threshold=0.7, center_click=True) -> bool:
         """
         Find an image on screen and click on it if found.
         
@@ -82,7 +82,7 @@ class ImageUtils:
             logging.info(f"{image_name} not found or below threshold (confidence: {match_percentage:.2f}%)")
             return False
 
-    def detect_image(self, adb_utils, image_folder: str, image_name: str, confidence_threshold=0.8) -> bool:
+    def detect_image(self, adb_utils, image_folder: str, image_name: str, confidence_threshold=0.7) -> bool:
         """
         Just detect an image on screen without clicking.
         

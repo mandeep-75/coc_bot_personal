@@ -35,7 +35,7 @@ class StartingSequence:
             logging.warning("Game not in expected state, cannot collect resources.")
             return False
 
-        resources = ["gold.png", "elixir.png", "dark_elixir.png"]
+        resources = ["close.png","gold.png", "elixir.png", "dark_elixir.png"]
         for resource in resources:
             logging.info(f"Attempting to collect {resource}.")
             if self.image.find_and_click_image(self.adb, self.image_folder, resource):

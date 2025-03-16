@@ -306,47 +306,69 @@ class SearchSequence:
         # Return True if at least 2 resources meet thresholds
         return resources_met >= 2
 
-    def search_for_base(self, max_searches=30000) -> bool:
+    def reset_search_state(self):
+        """Reset the search state to prepare for a new search sequence"""
+        logging.info("Resetting search state for a new search cycle")
+        # Nothing to reset currently, but we can add state tracking variables in the future if needed
+        return True
+
+    def search_for_base(self, max_searches=30000):
         """Search for a base with resources meeting the thresholds"""
         logging.info("\n" + "="*50)
         logging.info(f"STARTING BASE SEARCH (max attempts: {max_searches})")
         logging.info(f"ATTACK CRITERIA: At least 2 of 3 resources must meet thresholds")
         logging.info("="*50)
         
-        self.click_initial_buttons()
+        # Reset search state
+        self.reset_search_state()
+        
+        # Try to click initial buttons with error handling
+        try:
+            self.click_initial_buttons()
+        except Exception as e:
+            logging.error(f"❌ Error clicking initial buttons: {e}")
+            # Add recovery attempt here
+            return False
 
         for attempt in range(max_searches):
             logging.info("\n" + "-"*40)
             logging.info(f"SEARCH ATTEMPT {attempt + 1}/{max_searches}")
             logging.info("-"*40)
             
-            gold, elixir, dark = self.extract_resource_amounts()
+            try:
+                gold, elixir, dark = self.extract_resource_amounts()
+                
+                # Format threshold summary with visual indicators
+                gold_indicator = "✓" if gold >= self.gold_threshold else "✗"
+                elixir_indicator = "✓" if elixir >= self.elixir_threshold else "✗"
+                dark_indicator = "✓" if dark >= self.dark_threshold else "✗"
+                
+                # Count resources that meet thresholds
+                resources_met = sum([
+                    1 if gold >= self.gold_threshold else 0,
+                    1 if elixir >= self.elixir_threshold else 0,
+                    1 if dark >= self.dark_threshold else 0
+                ])
+                
+                logging.info(f"Resource summary ({resources_met}/3 thresholds met):")
+                logging.info(f"  Gold:   {gold:,} / {self.gold_threshold:,} {gold_indicator}")
+                logging.info(f"  Elixir: {elixir:,} / {self.elixir_threshold:,} {elixir_indicator}")
+                logging.info(f"  Dark:   {dark:,} / {self.dark_threshold:,} {dark_indicator}")
 
-            # Format threshold summary with visual indicators
-            gold_indicator = "✓" if gold >= self.gold_threshold else "✗"
-            elixir_indicator = "✓" if elixir >= self.elixir_threshold else "✗"
-            dark_indicator = "✓" if dark >= self.dark_threshold else "✗"
-            
-            # Count resources that meet thresholds
-            resources_met = sum([
-                1 if gold >= self.gold_threshold else 0,
-                1 if elixir >= self.elixir_threshold else 0,
-                1 if dark >= self.dark_threshold else 0
-            ])
-            
-            logging.info(f"Resource summary ({resources_met}/3 thresholds met):")
-            logging.info(f"  Gold:   {gold:,} / {self.gold_threshold:,} {gold_indicator}")
-            logging.info(f"  Elixir: {elixir:,} / {self.elixir_threshold:,} {elixir_indicator}")
-            logging.info(f"  Dark:   {dark:,} / {self.dark_threshold:,} {dark_indicator}")
+                if self.meets_threshold(gold, elixir, dark):
+                    logging.info("\n" + "*"*50)
+                    logging.info(f"BASE FOUND - {resources_met}/3 THRESHOLDS MET - ATTACKING!")
+                    logging.info("*"*50 + "\n")
+                    return True
 
-            if self.meets_threshold(gold, elixir, dark):
-                logging.info("\n" + "*"*50)
-                logging.info(f"BASE FOUND - {resources_met}/3 THRESHOLDS MET - ATTACKING!")
-                logging.info("*"*50 + "\n")
-                return True
-
-            logging.info(f"Base does not meet requirements ({resources_met}/3 thresholds) - SKIPPING")
-            self.click_skip_button()
+                logging.info(f"Base does not meet requirements ({resources_met}/3 thresholds) - SKIPPING")
+                self.click_skip_button()
+                
+            except Exception as e:
+                logging.error(f"❌ Error during search attempt {attempt + 1}: {e}")
+                # Try to recover and continue
+                self.click_skip_button()
+                time.sleep(1)
 
         logging.info("\n" + "="*50)
         logging.info(f"SEARCH COMPLETE - Max attempts ({max_searches}) reached")

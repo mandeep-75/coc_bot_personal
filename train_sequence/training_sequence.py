@@ -114,7 +114,7 @@ class TrainingSequence:
         logging.info("="*50)
         
         time.sleep(0.5)
-        if self.image.find_and_click_image(self.adb, self.image_folder, "home_button.png"):
+        if self.image.find_and_click_image(self.adb, self.image_folder, "home_anker.png"):
             logging.info("✅ Clicked home button for recovery")
         else:
             logging.warning("❌ Could not find home button for recovery")

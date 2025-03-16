@@ -95,3 +95,67 @@ class StartingSequence:
         logging.info(f"RESOURCE COLLECTION COMPLETED: {resource_count}/{len(resources)} resources collected")
         logging.info("-"*40)
         return True
+
+    def is_home_screen(self):
+        """Check if the game is currently on the home screen"""
+        logging.info("Checking if we are on the home screen...")
+        
+        if not self.adb.take_screenshot("screen.png"):
+            logging.error("❌ Failed to take screenshot while checking home screen")
+            return False
+            
+        # Check for home screen indicators
+        for marker in ["home_anker.png", "home_marker.png"]:
+            if self.image.detect_image(self.adb, self.image_folder, marker):
+                logging.info(f"✅ Home screen detected using {marker}")
+                return True
+        
+        logging.warning("❌ Not on home screen")
+        return False
+
+    def navigate_to_home(self, max_attempts=5):
+        """Attempt to navigate back to the home screen"""
+        logging.info("\n" + "-"*40)
+        logging.info("NAVIGATING TO HOME SCREEN")
+        logging.info("-"*40)
+        
+        # First check if already on home screen
+        if self.is_home_screen():
+            return True
+        
+        # Try clicking UI elements that can lead back to home
+        for _ in range(max_attempts):
+            # Take a screenshot
+            if not self.adb.take_screenshot("screen.png"):
+                continue
+            
+            # Check for buttons that can help return to home
+            buttons = [
+                "return_home.png",
+                "close_button.png", 
+                "okay_button.png", 
+                "cancel_button.png",
+                "home_button.png"
+            ]
+            
+            clicked = False
+            for button in buttons:
+                if self.image.find_and_click_image(self.adb, self.image_folder, button):
+                    logging.info(f"✅ Clicked {button} to return home")
+                    clicked = True
+                    time.sleep(1.5)
+                    break
+            
+            # If we didn't click anything, try a special technique - click top left corner
+            if not clicked:
+                logging.info("Trying to click top-left area (often has home/back button)")
+                self.adb.humanlike_click(50, 50)  # Top left is often a back button
+                time.sleep(1.5)
+            
+            # Check if we reached home
+            if self.is_home_screen():
+                logging.info("✅ Successfully navigated to home screen")
+                return True
+        
+        logging.error("❌ Failed to navigate to home screen after multiple attempts")
+        return False

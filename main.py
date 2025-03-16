@@ -41,7 +41,13 @@ def main():
             logging.info("✅ Resources collected successfully")
         else:
             logging.warning("⚠️ Resource collection had issues")
-        
+           
+        # Then train troops
+        logging.info("Starting troop training...")
+        if train_sequence.train_troops():
+            logging.info("✅ Troops trained successfully")
+        else:
+            logging.warning("⚠️ Troop training had issues")
             
         # Make sure we're on the home screen before starting attack cycles
         start_sequence.navigate_to_home()
@@ -49,13 +55,7 @@ def main():
         # Simplify to just run the attack cycles without home screen check
         logging.info("\nStarting attack cycles...")
         attack_sequence.end_battle_and_continue(loop_count=2)
-          
-        # Then train troops
-        logging.info("Starting troop training...")
-        if train_sequence.train_troops():
-            logging.info("✅ Troops trained successfully")
-        else:
-            logging.warning("⚠️ Troop training had issues")
+       
         
     except KeyboardInterrupt:
         logging.info("\n" + "="*50)

@@ -50,20 +50,35 @@ class AttackSequence:
         logging.info("Waiting for deployment animations to complete...")
         time.sleep(3)
         
-        # Return home after deploying all troops and spells
-        if self.return_home():
-            logging.info("✅ Successfully returned home after deployment")
-        else:
-            logging.info("⚠️ Could not find return home button, waiting for attack to end...")
-            # Fall back to waiting for the attack to complete
-            logging.info(f"Waiting {max_duration} seconds for attack to complete...")
-            time.sleep(max_duration)
+        # Try to find and click the return home button
+        max_attempts = 30
+        for attempt in range(max_attempts):
+            time.sleep(5)
+            logging.info(f"Attempt {attempt+1}/{max_attempts}: Looking for return home button...")
             
-            # Try one more time to return home
-            self.return_home()
+            # Take a screenshot
+            if not self.adb.take_screenshot("screen.png"):
+                logging.error("❌ Failed to take screenshot for return home")
+                time.sleep(1)
+                continue
+            
+            # Try to find the return home button
+            return_buttons = ["return_home.png"]
+            
+            for button in return_buttons:
+                if self.image.find_and_click_image(self.adb, self.image_folder, button):
+                    logging.info(f"✅ Found and clicked {button}")
+                    time.sleep(2)  # Wait for button click to take effect
+                    logging.info("Attack sequence completed.")
+                    return True
+            
+            # If we reach here, return home button was not found
+            logging.info("Return home button not found in this attempt, trying again...")
+            time.sleep(1)
         
-        logging.info("Attack sequence completed.")
-        return True
+        logging.warning("⚠️ Could not find return home button after multiple attempts")
+        logging.info("Attack sequence completed with issues.")
+        return False
 
     def end_battle_and_continue(self, loop_count=1):
         """
@@ -90,35 +105,14 @@ class AttackSequence:
                 else:
                     logging.info("⚠️ Attack completed with issues")
                     
-                # End battle if not the last cycle
-                if cycle < loop_count - 1:
-                    self._end_current_battle()
+                # Since we removed the end battle logic, we rely on the execute_attack function
+                # to handle the return home functionality
             else:
                 logging.info("⚠️ Failed to find suitable base - cycle incomplete")
         
         logging.info("\n" + "="*50)
         logging.info(f"COMPLETED {loop_count} ATTACK CYCLES")
         logging.info("="*50)
-
-    def _end_current_battle(self, max_attempts=10):
-        """End the current battle and return to home screen"""
-        logging.info("\nEnding current battle...")
-        
-        for attempt in range(max_attempts):
-            if not self.adb.take_screenshot("screen.png"):
-                time.sleep(1)
-                continue
-            
-            if self.image.find_and_click_image(self.adb, self.image_folder, "end_battle.png"):
-                logging.info("✅ End battle button found and clicked")
-                time.sleep(3)  # Wait for transition
-                return True
-                
-            logging.info(f"Attempt {attempt+1}/{max_attempts}: End battle button not found")
-            time.sleep(1)
-        
-        logging.error("Failed to end battle after multiple attempts")
-        return False
 
     def prepare_deployment(self):
         """
@@ -250,10 +244,10 @@ class AttackSequence:
         """
         Deploy all troops, spells, and heroes to their respective locations.
         """
-        # Define target locations for each type (fixed syntax error - missing comma)
+        # Define target locations for each type
         troop_locations = [
             (185, 340), (200, 295), (250, 400), (217, 375), (261, 261), 
-            (355, 199), (221, 247), (216, 416), (163, 370), (165, 308),  # Added comma
+            (355, 199), (221, 247), (216, 416), (163, 370), (165, 308),
             (185, 340), (200, 295), (250, 400), (217, 375), (261, 261), 
             (355, 199), (221, 247), (216, 416), (163, 370), (165, 308), 
             (185, 340), (200, 295), (250, 400), (217, 375), (261, 261)
@@ -267,37 +261,24 @@ class AttackSequence:
             (149, 320), (194, 379), (214, 261), (157, 325)
         ]
 
-        for _ in range(2):  # Run the attack sequence twice
-            # Deploy troops
-            logging.info("Deploying troops...")
-            self.deploy_units("super_minion", troop_locations)
+        # Deploy troops
+        logging.info("Deploying troops...")
+        self.deploy_units("super_minion", troop_locations)
 
         # Deploy spells
         logging.info("Deploying spells...")
-        self.deploy_units("rage_spell", spell_locations)  # Fixed from "lightning_spell" to "rage_spell"
+        self.deploy_units("rage_spell", spell_locations)
 
-            # Deploy heroes
-            logging.info("Deploying heroes...")
-            for i, hero_name in enumerate(["barbarian_king", "archer_queen", "grand_warden", "royal_champion"]):
-                if i < len(hero_locations):
-                    logging.info(f"Deploying {hero_name} to position {hero_locations[i]}")
-                    self.deploy_units(hero_name, [hero_locations[i]])
+        # Deploy heroes
+        logging.info("Deploying heroes...")
+        for i, hero_name in enumerate(["barbarian_king", "archer_queen", "grand_warden", "royal_champion"]):
+            if i < len(hero_locations):
+                logging.info(f"Deploying {hero_name} to position {hero_locations[i]}")
+                self.deploy_units(hero_name, [hero_locations[i]])
 
-            # Deploy hero abilities after a delay
-            logging.info("Activating hero abilities after delay...")
-            self.activate_hero_abilities(["barbarian_king", "archer_queen", "grand_warden", "royal_champion"], ability_delay=5)
-
-            # Check for the return home button every 10 seconds
-            logging.info("Checking for return home button every 10 seconds...")
-            while True:
-                if self.return_home():
-                    logging.info("✅ Successfully returned home")
-                    break
-                logging.info("Return home button not found, checking again in 10 seconds...")
-                time.sleep(10)
-
-            # Log completion of one attack cycle
-            logging.info("Completed one attack cycle.")
+        # Deploy hero abilities after a delay
+        logging.info("Activating hero abilities after delay...")
+        self.activate_hero_abilities(["barbarian_king", "archer_queen", "grand_warden", "royal_champion"], ability_delay=5)
 
     def activate_hero_abilities(self, hero_names, ability_delay=5):
         """
@@ -326,30 +307,3 @@ class AttackSequence:
             time.sleep(0.5)  # Wait for ability animation
 
         return True
-
-    def return_home(self):
-        """
-        Find and click the return home button after deploying troops.
-        
-        Returns:
-            bool: True if return home button was found and clicked
-        """
-        logging.info("\n" + "-"*40)
-        logging.info("RETURNING HOME AFTER DEPLOYMENT")
-        logging.info("-"*40)
-        
-        # Take a screenshot
-        if not self.adb.take_screenshot("screen.png"):
-            logging.error("❌ Failed to take screenshot for return home")
-            return False
-        
-        # Try to find the return home button
-        return_buttons = ["return_home.png"]
-        
-        for button in return_buttons:
-            logging.info(f"Looking for {button}...")
-            if self.image.find_and_click_image(self.adb, self.image_folder, button):
-                logging.info(f"✅ Found and clicked {button}")
-                break
-
-                # Confirm if there's an "okay" button to

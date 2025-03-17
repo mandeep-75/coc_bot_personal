@@ -7,6 +7,13 @@ from utils.debug_utils import DebugVisualizer
 class ImageUtils:
     def __init__(self):
         self.debugger = DebugVisualizer()
+        self.logged_messages = set()  # Set to track logged messages
+
+    def log_once(self, message):
+        """Log a message only once."""
+        if message not in self.logged_messages:
+            logging.info(message)
+            self.logged_messages.add(message)
 
     def find_image(self, screenshot_path: str, template_path: str) -> tuple[tuple[int, int] | None, float]:
         """
@@ -19,7 +26,7 @@ class ImageUtils:
             template = cv2.imread(template_path)
             
             if screenshot is None or template is None:
-                logging.error("Failed to load images")
+                self.log_once("Failed to load images")
                 return None, 0.0
 
             # Perform template matching
@@ -50,7 +57,7 @@ class ImageUtils:
             return None, match_percentage
 
         except Exception as e:
-            logging.error(f"Error in image matching: {e}")
+            self.log_once(f"Error in image matching: {e}")
             return None, 0.0
 
     def find_and_click_image(self, adb_utils, image_folder: str, image_name: str, 
@@ -76,7 +83,7 @@ class ImageUtils:
         
         # Log the confidence value regardless of success
         confidence = match_percentage / 100
-        logging.info(f"Match confidence for {image_name}: {confidence:.3f} (threshold: {confidence_threshold:.2f})")
+        self.log_once(f"Match confidence for {image_name}: {confidence:.3f} (threshold: {confidence_threshold:.2f})")
         
         if pos and confidence >= confidence_threshold:
             if center_click:
@@ -86,18 +93,18 @@ class ImageUtils:
                     h, w = template.shape[:2]
                     center_x = pos[0] + w // 2
                     center_y = pos[1] + h // 2
-                    logging.info(f"Clicking {image_name} at center position ({center_x}, {center_y})")
+                    self.log_once(f"Clicking {image_name} at center position ({center_x}, {center_y})")
                     adb_utils.humanlike_click(center_x, center_y)
                 else:
-                    logging.info(f"Clicking {image_name} at detection position {pos}")
+                    self.log_once(f"Clicking {image_name} at detection position {pos}")
                     adb_utils.humanlike_click(*pos)
             else:
-                logging.info(f"Clicking {image_name} at detection position {pos}")
+                self.log_once(f"Clicking {image_name} at detection position {pos}")
                 adb_utils.humanlike_click(*pos)
                 
             return True
         
-        logging.info(f"Image {image_name} not matched with sufficient confidence")
+        self.log_once(f"Image {image_name} not matched with sufficient confidence")
         return False
 
     def detect_image(self, adb_utils, image_folder: str, image_name: str, confidence_threshold=0.7) -> bool:

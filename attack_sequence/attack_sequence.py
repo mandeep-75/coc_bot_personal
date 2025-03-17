@@ -106,15 +106,12 @@ class AttackSequence:
                 while pygame.mixer.music.get_busy():
                     pass  # Wait for audio to finish playing
               
-               
                 # attack_result = self.execute_attack()
                 
                 # if attack_result:
                 #     logging.info("✅ Attack successfully completed")
                 # else:
                 #     logging.info("⚠️ Attack completed with issues")
-
-
 
                 # Since we removed the end battle logic, we rely on the execute_attack function
                 # to handle the return home functionality
@@ -124,6 +121,9 @@ class AttackSequence:
         logging.info("\n" + "="*50)
         logging.info(f"COMPLETED {loop_count} ATTACK CYCLES")
         logging.info("="*50)
+
+        # Wait for user input before continuing
+        input("Press Enter to continue...")
 
     def prepare_deployment(self):
         """

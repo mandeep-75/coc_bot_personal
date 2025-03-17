@@ -41,7 +41,7 @@ class SearchSequence:
                     # Special handling for find_match button - only wait after find_match
                     if button == "find_match.png":
                         logging.info("Waiting for resources to load after find match...")
-                        time.sleep(2)  # Reduced from 3.5s
+                        time.sleep(3)  # Reduced from 3.5s
                     else:
                         time.sleep(0.8)  # Reduced from 1.5-2.5s random wait
 

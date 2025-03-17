@@ -35,12 +35,12 @@ def main():
     logging.info("")
 
     try:
-        # First collect resources
-        logging.info("Starting resource collection...")
-        if start_sequence.collect_resources():
-            logging.info("✅ Resources collected successfully")
-        else:
-            logging.warning("⚠️ Resource collection had issues")
+        # # First collect resources
+        # logging.info("Starting resource collection...")
+        # if start_sequence.collect_resources():
+        #     logging.info("✅ Resources collected successfully")
+        # else:
+        #     logging.warning("⚠️ Resource collection had issues")
            
        # Make sure we're on the home screen before starting attack cycles
         start_sequence.navigate_to_home()

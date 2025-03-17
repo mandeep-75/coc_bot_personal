@@ -5,6 +5,7 @@ import random
 import shutil
 import cv2
 import numpy as np
+import pygame
 from utils.adb_utils import ADBUtils
 from utils.image_utils import ImageUtils
 from search_sequence.search_sequence import SearchSequence
@@ -98,13 +99,23 @@ class AttackSequence:
             
             if self.search_sequence.search_for_base(max_searches=30000):
                 logging.info("🎯 Target acquired! Initiating attack...")
-                attack_result = self.execute_attack()
                 
-                if attack_result:
-                    logging.info("✅ Attack successfully completed")
-                else:
-                    logging.info("⚠️ Attack completed with issues")
-                    
+                pygame.mixer.init()
+                pygame.mixer.music.load("found.mp3")
+                pygame.mixer.music.play()
+                while pygame.mixer.music.get_busy():
+                    pass  # Wait for audio to finish playing
+              
+               
+                # attack_result = self.execute_attack()
+                
+                # if attack_result:
+                #     logging.info("✅ Attack successfully completed")
+                # else:
+                #     logging.info("⚠️ Attack completed with issues")
+
+
+
                 # Since we removed the end battle logic, we rely on the execute_attack function
                 # to handle the return home functionality
             else:

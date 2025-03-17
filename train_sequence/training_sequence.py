@@ -92,6 +92,11 @@ class TrainingSequence:
                     time.sleep(0.5)
                     self.image.find_and_click_image(self.adb, self.image_folder, "okay.png")
                     time.sleep(0.5)
+                      # Second confirmation click if needed
+                if self.image.find_and_click_image(self.adb, self.image_folder, "train_button_2.png"):
+                    time.sleep(0.5)
+                    self.image.find_and_click_image(self.adb, self.image_folder, "okay.png")
+                    time.sleep(0.5)
                     self.image.find_and_click_image(self.adb, self.image_folder, "close.png")
                     
                     logging.info("\n" + "-"*40)

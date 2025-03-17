@@ -47,7 +47,7 @@ def main():
         
         # Simplify to just run the attack cycles without home screen check
         logging.info("\nStarting attack cycles...")
-        attack_sequence.end_battle_and_continue(loop_count=1)
+        attack_sequence.end_battle_and_continue(loop_count=2)
        
          # Then train troops
         logging.info("Starting troop training...")

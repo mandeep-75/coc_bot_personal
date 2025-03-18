@@ -39,7 +39,7 @@ class StartingSequence:
     def click_pre_collection_buttons(self):
         """Click additional buttons before collecting resources."""
         logging.info("\n" + "-"*40)
-        logging.info("PREPARING FOR RESOURCE COLLECTION")
+        logging.info("CENTERING SCREEN (MUST FOR TROOP DEPLOYMENT)")
         logging.info("-"*40)
         
         buttons = ["attack_button.png", "find_match.png", "end_battle.png"]
@@ -49,8 +49,8 @@ class StartingSequence:
             
             # Take a screenshot before attempting to find "end_battle.png"
             if button == "end_battle.png":
-                logging.info("Waiting 3 seconds for end battle button to appear...")
-                time.sleep(3)  # Add 3-second delay specifically for end battle button
+                logging.info("Waiting 2 seconds for end battle button to appear...")
+                time.sleep(2)  # Add 3-second delay specifically for end battle button
                 
                 if not self.adb.take_screenshot("screen.png"):
                     logging.error(f"❌ Failed to take screenshot before finding {button}")
@@ -131,9 +131,8 @@ class StartingSequence:
             
             # Check for buttons that can help return to home
             buttons = [
-                "return_home.png",
-                "close_button.png", 
-                "okay_button.png", 
+                "close.png",
+                "back_anchor.png", 
                 "cancel_button.png",
                 "home_button.png"
             ]

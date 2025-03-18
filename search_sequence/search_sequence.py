@@ -20,8 +20,8 @@ class SearchSequence:
         self.dark_threshold = dark_threshold
 
         # Wider bounding boxes for resource detection (x1, y1, x2, y2)
-        self.gold_bbox = (95, 95, 200, 120)  # Top left region - Gold
-        self.elixir_bbox = (95, 135, 200, 160)  # Top center region - Elixir
+        self.gold_bbox = (95, 95, 220, 120)  # Top left region - Gold
+        self.elixir_bbox = (95, 135, 220, 160)  # Top center region - Elixir
         self.dark_bbox = (95, 175, 200, 200)  # Top right region - Dark Elixir
 
         self.debugger = DebugVisualizer()

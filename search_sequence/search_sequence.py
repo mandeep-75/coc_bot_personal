@@ -57,11 +57,11 @@ class SearchSequence:
                     break
                 else:
                     logging.warning(f"Could not find {button} on attempt {attempt + 1}")
-                    time.sleep(0.5)  # Reduced from 1s
+                   
 
         # Shorter delay to ensure screen is ready
         logging.info("Waiting for resources to appear...")
-        time.sleep(1)  # Reduced from 2.5s
+        time.sleep(2)  # Reduced from 2.5s
 
     def verify_attack_menu(self):
         """Verify we're in the attack menu by looking for the find_match button"""
@@ -133,7 +133,7 @@ class SearchSequence:
     def extract_resource_amounts(self) -> tuple[int, int, int]:
         """Enhanced extraction with region verification"""
         logging.info("Taking screenshot for resource detection")
-
+        time.sleep(3)
         if not self.adb.take_screenshot("screen.png"):
             return 0, 0, 0
 
@@ -283,9 +283,9 @@ class SearchSequence:
         """Click the next/skip button to move to the next base"""
         logging.info("Attempting to click next button...")
         
-        if self.image.find_and_click_image(self.adb, self.image_folder, "next_button.png"):
+        if self.image.find_and_click_image_now(self.adb, self.image_folder, "next_button.png"):
             logging.info("Next button clicked, waiting for new base to load...")
-            time.sleep(3)  # Wait for the new base to load
+            
         else:
             logging.warning("Could not find next/skip button - search may be interrupted")
 
@@ -349,11 +349,6 @@ class SearchSequence:
                     1 if elixir >= self.elixir_threshold else 0,
                     1 if dark >= self.dark_threshold else 0
                 ])
-                
-                logging.info(f"Resource summary ({resources_met}/3 thresholds met):")
-                logging.info(f"  Gold:   {gold:,} / {self.gold_threshold:,} {gold_indicator}")
-                logging.info(f"  Elixir: {elixir:,} / {self.elixir_threshold:,} {elixir_indicator}")
-                logging.info(f"  Dark:   {dark:,} / {self.dark_threshold:,} {dark_indicator}")
 
                 if self.meets_threshold(gold, elixir, dark):
                     logging.info("\n" + "*"*50)

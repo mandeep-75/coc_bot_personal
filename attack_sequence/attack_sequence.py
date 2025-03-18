@@ -105,6 +105,7 @@ class AttackSequence:
                 pygame.mixer.music.play()
                 while pygame.mixer.music.get_busy():
                     pass  # Wait for audio to finish playing
+            
               
                 # attack_result = self.execute_attack()
                 
@@ -122,8 +123,7 @@ class AttackSequence:
         logging.info(f"COMPLETED {loop_count} ATTACK CYCLES")
         logging.info("="*50)
 
-        # Wait for user input before continuing
-        input("Press Enter to continue...")
+        
 
     def prepare_deployment(self):
         """

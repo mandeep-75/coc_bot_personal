@@ -83,7 +83,7 @@ class ImageUtils:
         
         # Log the confidence value regardless of success
         confidence = match_percentage / 100
-        self.log_once(f"Match confidence for {image_name}: {confidence:.3f} (threshold: {confidence_threshold:.2f})")
+        self.log_once(f"Match new screen shot confidence for {image_name}: {confidence:.3f} (threshold: {confidence_threshold:.2f})")
         
         if pos and confidence >= confidence_threshold:
             if center_click:
@@ -104,9 +104,38 @@ class ImageUtils:
                 
             return True
         
-        self.log_once(f"Image {image_name} not matched with sufficient confidence")
-        return False
+    def find_and_click_image_now(self, adb_utils, image_folder: str, image_name: str, 
+                                    confidence_threshold=0.7, center_click=True) -> bool:
+            
+                image_path = os.path.join(image_folder, image_name)
+                pos, match_percentage = self.find_image("screen.png", image_path)
+                
+                # Log the confidence value regardless of success
+                confidence = match_percentage / 100
+                self.log_once(f"Match now confidence for {image_name}: {confidence:.3f} (threshold: {confidence_threshold:.2f})")
+                
+                if pos and confidence >= confidence_threshold:
+                    if center_click:
+                        # Get the image dimensions to click in center
+                        template = cv2.imread(image_path)
+                        if template is not None:
+                            h, w = template.shape[:2]
+                            center_x = pos[0] + w // 2
+                            center_y = pos[1] + h // 2
+                            self.log_once(f"Clicking {image_name} at center position ({center_x}, {center_y})")
+                            adb_utils.humanlike_click(center_x, center_y)
+                        else:
+                            self.log_once(f"Clicking {image_name} at detection position {pos}")
+                            adb_utils.humanlike_click(*pos)
+                    else:
+                        self.log_once(f"Clicking {image_name} at detection position {pos}")
+                        adb_utils.humanlike_click(*pos)
+                        
+                    return True
+                self.log_once(f"Image {image_name} not matched with sufficient confidence")
+                return False
 
+           
     def detect_image(self, adb_utils, image_folder: str, image_name: str, confidence_threshold=0.7) -> bool:
         """
         Just detect an image on screen without clicking.

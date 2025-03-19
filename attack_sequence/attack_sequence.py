@@ -33,53 +33,82 @@ class AttackSequence:
     def execute_attack(self, max_duration=10):
         """
         Execute a simplified attack assuming we're already at the attack screen.
-        
+
         Returns:
             bool: True to indicate attack was completed
         """
-        logging.info("\n" + "="*50)
+        logging.info("\n" + "=" * 50)
         logging.info("EXECUTING ATTACK")
-        logging.info("="*50)
-        
+        logging.info("=" * 50)
+
         # First prepare troop deployment (identify troops, spells, etc.)
         self.prepare_deployment()
-        
+
         # Deploy all troops in sequence
         self.deploy_all()
-        
+
         # Wait a short time for deployment animations
         logging.info("Waiting for deployment animations to complete...")
         time.sleep(3)
-        
-        # Try to find and click the return home button
+
+        # Try to find and click the return home or claim reward button
+        return_buttons = ["return_home.png", "claim_reward.png"]
         max_attempts = 30
+        found_button = None
+
         for attempt in range(max_attempts):
-            time.sleep(5)
-            logging.info(f"Attempt {attempt+1}/{max_attempts}: Looking for return home button...")
-            
-            # Take a screenshot
-            if not self.adb.take_screenshot("screen.png"):
-                logging.error("❌ Failed to take screenshot for return home")
-                time.sleep(1)
-                continue
-            
-            # Try to find the return home button
-            return_buttons = ["return_home.png"]
-            
+            logging.info(f"Attempt {attempt + 1}/{max_attempts}: Looking for return home or claim reward button...")
+            time.sleep(5)  # Wait before checking again
+
+            # Check if any of the buttons are detected with confidence ≥ 0.8
             for button in return_buttons:
-                if self.image.find_and_click_image(self.adb, self.image_folder, button):
-                    logging.info(f"✅ Found and clicked {button}")
-                    time.sleep(2)  # Wait for button click to take effect
-                    logging.info("Attack sequence completed.")
-                    return True
-            
-            # If we reach here, return home button was not found
-            logging.info("Return home button not found in this attempt, trying again...")
+                if self.image.detect_image(self.adb, self.image_folder, button, confidence_threshold=0.8):
+                    found_button = button
+                    break  # Stop searching once a button is found
+
+            if found_button:
+                if found_button == "claim_reward.png":
+                    logging.info("🏆 Claim reward button found. Running alternative exit sequence.")
+                    if self.image.find_and_click_image(self.adb, self.image_folder, found_button, confidence_threshold=0.8):
+                        logging.info("✅ Clicked claim reward button")
+
+                    # Perform additional clicks at predefined location (1240, 330)
+                    for _ in range(5):
+                        self.adb.humanlike_click(1240, 330)
+
+                    # Now wait for "continue.png" to appear and click it
+                    logging.info("🔄 Waiting for continue button...")
+                    max_continue_attempts = 30
+                    for attempt in range(max_continue_attempts):
+                        if self.image.detect_image(self.adb, self.image_folder, "continue.png", confidence_threshold=0.8):
+                            logging.info("▶️ Continue button found! Clicking...")
+                            if self.image.find_and_click_image(self.adb, self.image_folder, "continue.png", confidence_threshold=0.8):
+                                logging.info("✅ Clicked continue button")
+                                return True  # Exit successfully
+                        else:
+                            logging.info(f"Continue button not found (Attempt {attempt + 1}/{max_continue_attempts}). Clicking predefined location...")
+                            self.adb.humanlike_click(1240, 330)  # Click at predefined location as a fallback
+                            time.sleep(2)  # Wait before checking again
+
+                    logging.warning("⚠️ Could not find continue button after multiple attempts.")
+                    logging.info("Attack sequence completed with issues.")
+                    return False
+
+                else:
+                    logging.info("🏠 Return home button found. Running normal exit sequence.")
+                    if self.image.find_and_click_image(self.adb, self.image_folder, found_button, confidence_threshold=0.8):
+                        logging.info(f"✅ Found and clicked {found_button}")
+                        time.sleep(2)  # Wait for button click to take effect
+                        logging.info("Attack sequence completed.")
+                        return True
+
+            logging.info("Return home or claim reward button not found, retrying...")
             time.sleep(1)
-        
-        logging.warning("⚠️ Could not find return home button after multiple attempts")
+
+        logging.warning("⚠️ Could not find return home button after multiple attempts.")
         logging.info("Attack sequence completed with issues.")
         return False
+
 
     def end_battle_and_continue(self, loop_count=1):
         """
@@ -107,12 +136,12 @@ class AttackSequence:
                     pass  # Wait for audio to finish playing
             
               
-                # attack_result = self.execute_attack()
+                attack_result = self.execute_attack()
                 
-                # if attack_result:
-                #     logging.info("✅ Attack successfully completed")
-                # else:
-                #     logging.info("⚠️ Attack completed with issues")
+                if attack_result:
+                    logging.info("✅ Attack successfully completed")
+                else:
+                    logging.info("⚠️ Attack completed with issues")
 
                 # Since we removed the end battle logic, we rely on the execute_attack function
                 # to handle the return home functionality
@@ -143,6 +172,7 @@ class AttackSequence:
         # Format: {name: (image_filename, expected_count)}
         elements_to_detect = {
             "super_minion": ("super_minion.png", 25),
+            "ice_spell": ("spell_ice.png", 1),
             "rage_spell": ("spell.png", 5),
             "barbarian_king": ("hero_3.png", 1),
             "archer_queen": ("hero_4.png", 1),
@@ -198,7 +228,8 @@ class AttackSequence:
             logging.warning("⚠️ No troops detected, using default positions")
             self.deployment_locations = {
                 "super_minion": {"position": (100, 600), "count": 25},
-                "rage_spell": {"position": (200, 600), "count": 5},
+                "ice_spell": {"position": (240, 600), "count": 1},
+                "rage_spell":{"position": (200, 600), "count": 5},
                 "barbarian_king": {"position": (300, 600), "count": 1},
                 "archer_queen": {"position": (350, 600), "count": 1},
                 "grand_warden": {"position": (400, 600), "count": 1},
@@ -222,7 +253,6 @@ class AttackSequence:
             element_name: The name of the element to deploy.
             target_locations: A list of tuples [(x1, y1), (x2, y2), ...] representing the coordinates to deploy each unit.
         """
-        # Check if the element exists in our deployment locations
         if element_name not in self.deployment_locations:
             logging.error(f"❌ Element {element_name} not prepared for deployment")
             return False
@@ -231,23 +261,22 @@ class AttackSequence:
         element_pos = element_data["position"]
         unit_count = element_data["count"]
 
-        # No need to check target_locations length - we'll cycle through them
+        # Use only the required number of locations
         target_count = min(unit_count, len(target_locations))
-        
+
         logging.info(f"Deploying {target_count} units of {element_name}")
 
         # Select the element once
         logging.info(f"Selecting {element_name} at position {element_pos}")
-        self.adb.humanlike_click(element_pos[0], element_pos[1])  # Pass x, y separately
-        time.sleep(0.5)  # Wait for selection to take effect
+        self.adb.humanlike_click(*element_pos)
+        time.sleep(0.3)
 
-        # Deploy to each target location
+        # Deploy troops
         for i in range(target_count):
-            # Use modulo to cycle through target locations if needed
-            target_x, target_y = target_locations[i % len(target_locations)]
-            logging.info(f"Deploying unit {i+1} to ({target_x}, {target_y})")
-            self.adb.humanlike_click(target_x, target_y)  # Pass x, y separately
-            time.sleep(random.uniform(0.2, 0.5))  # Random delay between deployments
+            target_x, target_y = target_locations[i]
+            logging.info(f"Deploying unit {i+1}/{target_count} to ({target_x}, {target_y})")
+            self.adb.humanlike_click(target_x, target_y)
+            time.sleep(random.uniform(0.2, 0.4))  # Random delay for human-like behavior
 
         return True
 
@@ -255,41 +284,38 @@ class AttackSequence:
         """
         Deploy all troops, spells, and heroes to their respective locations.
         """
-        # Define target locations for each type
+        # Define optimized troop locations (no duplicates)
         troop_locations = [
-            (185, 340), (200, 295), (250, 400), (217, 375), (261, 261), 
-            (355, 199), (221, 247), (216, 416), (163, 370), (165, 308),
-            (185, 340), (200, 295), (250, 400), (217, 375), (261, 261), 
-            (355, 199), (221, 247), (216, 416), (163, 370), (165, 308), 
-            (185, 340), (200, 295), (250, 400), (217, 375), (261, 261)
+            (173, 380), (198, 395), (220, 413), (252, 438), (293, 464), 
+            (321, 479), (178, 288), (203, 271), (227, 258), (256, 230),
+            (295,202),(318,188),(357,166),(383,144),(406,120),
+            (321, 479), (178, 288), (203, 271), (227, 258), (256, 230),
+            (295,202),(318,188),(357,166),(383,144),(406,120),
         ]
-        
-        spell_locations = [
-            (388, 272), (494, 395), (583, 205), (636, 395), (632, 542)
-        ]
-        
-        hero_locations = [
-            (149, 320), (194, 379), (214, 261), (157, 325)
-        ]
+
+        spell_locations = [(388, 272), (494, 395), (583, 205), (636, 395), (632, 542)]
+        ice_spell_locations = [(583, 205)]
+        hero_locations = [(149, 320), (194, 379), (214, 261), (157, 325)]
 
         # Deploy troops
         logging.info("Deploying troops...")
         self.deploy_units("super_minion", troop_locations)
 
-        # Deploy spells
-        logging.info("Deploying spells...")
-        self.deploy_units("rage_spell", spell_locations)
-
         # Deploy heroes
         logging.info("Deploying heroes...")
         for i, hero_name in enumerate(["barbarian_king", "archer_queen", "grand_warden", "royal_champion"]):
             if i < len(hero_locations):
-                logging.info(f"Deploying {hero_name} to position {hero_locations[i]}")
                 self.deploy_units(hero_name, [hero_locations[i]])
 
-        # Deploy hero abilities after a delay
-        logging.info("Activating hero abilities after delay...")
+        # Deploy spells
+        logging.info("Deploying spells...")
+        self.deploy_units("rage_spell", spell_locations)
+        logging.info("Deploying ice spell...")
+        self.deploy_units("ice_spell", ice_spell_locations)
+
+        # Activate hero abilities after a delay
         self.activate_hero_abilities(["barbarian_king", "archer_queen", "grand_warden", "royal_champion"], ability_delay=5)
+
 
     def activate_hero_abilities(self, hero_names, ability_delay=5):
         """

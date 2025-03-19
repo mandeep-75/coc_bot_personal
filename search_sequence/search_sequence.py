@@ -28,40 +28,43 @@ class SearchSequence:
         logging.info(f"Search sequence initialized with thresholds - G:{gold_threshold}, E:{elixir_threshold}, D:{dark_threshold}")
 
     def click_initial_buttons(self):
-        """Click buttons needed to start the search sequence with retries"""
-        buttons = ["attack_button.png", "find_match.png"]
+        """Click 'attack_button.png' first, then attempt to click 'find_match.png' if available."""
+        
+        # First, always click "attack_button.png"
+        for attempt in range(3):  # Try up to 3 times
+            logging.info(f"Attempting to click 'attack_button.png' (attempt {attempt + 1}/3)")
 
-        for button in buttons:
-            for attempt in range(3):  # Try 3 times for each button
-                logging.info(f"Attempting to click {button} (attempt {attempt + 1}/3)")
-
-                if self.image.find_and_click_image(self.adb, self.image_folder, button, confidence_threshold=0.6):
-                    logging.info(f"Successfully clicked {button}")
-
-                    # Special handling for find_match button - only wait after find_match
-                    if button == "find_match.png":
-                        logging.info("Waiting for resources to load after find match...")
-                        time.sleep(3)  # Reduced from 3.5s
-                    else:
-                        time.sleep(0.8)  # Reduced from 1.5-2.5s random wait
-
-                    # Verify we're in the right state after clicking attack button
-                    if button == "attack_button.png":
-                        if self.verify_attack_menu():
-                            break
-                        else:
-                            logging.warning("Attack menu not detected after click, retrying...")
-                            continue
-
-                    # If we got here, the button was clicked successfully
-                    break
+            if self.image.find_and_click_image(self.adb, self.image_folder, "attack_button.png", confidence_threshold=0.6):
+                logging.info("✅ Successfully clicked 'attack_button.png'")
+                
+                # Verify attack menu
+                if self.verify_attack_menu():
+                    break  # Exit retry loop
                 else:
-                    logging.warning(f"Could not find {button} on attempt {attempt + 1}")
-                   
+                    logging.warning("⚠️ Attack menu not detected after click, retrying...")
+                    time.sleep(1)  # Short wait before retrying
 
-        # Shorter delay to ensure screen is ready
-        logging.info("Waiting for resources to appear...")
-        time.sleep(2)  # Reduced from 2.5s
+            else:
+                logging.warning(f"⚠️ Could not find 'attack_button.png' on attempt {attempt + 1}")
+        
+        # Now, check for "find_match.png" and click it if found
+        for attempt in range(3):  # Try up to 3 times
+            logging.info(f"Attempting to click 'find_match.png' (attempt {attempt + 1}/3)")
+
+            if self.image.detect_image(self.adb, self.image_folder, "find_match.png"):
+                if self.image.find_and_click_image(self.adb, self.image_folder, "find_match.png", confidence_threshold=0.6):
+                    logging.info("✅ Successfully clicked 'find_match.png'")
+                    logging.info("⏳ Waiting for resources to load...")
+                    time.sleep(3)  # Reduced from 3.5s
+                    break  # Exit loop once successful
+            else:
+                logging.warning(f"🚫 'find_match.png' not found on attempt {attempt + 1}, retrying...")
+                time.sleep(1)  # Short wait before retrying
+
+        # Short delay to ensure UI stability
+        logging.info("⏳ Waiting for resources to appear...")
+        time.sleep(2)
+
 
     def verify_attack_menu(self):
         """Verify we're in the attack menu by looking for the find_match button"""

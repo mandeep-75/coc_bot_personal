@@ -37,30 +37,70 @@ class StartingSequence:
         return False
 
     def click_pre_collection_buttons(self):
-        """Click additional buttons before collecting resources."""
-        logging.info("\n" + "-"*40)
+        """Click buttons needed before collecting resources, ensuring proper battle sequence."""
+        
+        logging.info("\n" + "-" * 40)
         logging.info("CENTERING SCREEN (MUST FOR TROOP DEPLOYMENT)")
-        logging.info("-"*40)
-        
-        buttons = ["attack_button.png", "find_match.png", "end_battle.png"]
-        
-        for button in buttons:
-            logging.info(f"Attempting to click {button}...")
-            
-            # Take a screenshot before attempting to find "end_battle.png"
-            if button == "end_battle.png":
-                logging.info("Waiting 2 seconds for end battle button to appear...")
-                time.sleep(2)  # Add 3-second delay specifically for end battle button
-                
-                if not self.adb.take_screenshot("screen.png"):
-                    logging.error(f"❌ Failed to take screenshot before finding {button}")
-                    continue
-            
-            if self.image.find_and_click_image(self.adb, self.image_folder, button):
-                logging.info(f"✅ Successfully clicked on {button}")
+        logging.info("-" * 40)
+
+        # Step 1: Click "attack_button.png" first to open the attack menu
+        for attempt in range(3):  # Try up to 3 times
+            logging.info(f"Attempting to click 'attack_button.png' (attempt {attempt + 1}/3)")
+
+            if self.image.find_and_click_image(self.adb, self.image_folder, "attack_button.png", confidence_threshold=0.6):
+                logging.info("✅ Successfully clicked 'attack_button.png'")
+                time.sleep(1)  # Short delay before checking for find match button
+                break  # Exit retry loop once clicked
+            else:
+                logging.warning(f"⚠️ Could not find 'attack_button.png' on attempt {attempt + 1}")
+                time.sleep(1)  # Short delay before retrying
+
+        # Step 2: Now, attempt to click "find_match.png" (if available)
+        find_match_clicked = False
+        for attempt in range(3):  # Try up to 3 times
+            logging.info(f"Attempting to click 'find_match.png' (attempt {attempt + 1}/3)")
+
+            if self.image.detect_image(self.adb, self.image_folder, "find_match.png"):
+                if self.image.find_and_click_image(self.adb, self.image_folder, "find_match.png", confidence_threshold=0.6):
+                    logging.info("✅ Successfully clicked 'find_match.png'")
+                    find_match_clicked = True  # Mark that we clicked find match
+                    logging.info("⏳ Waiting for resources to load...")
+                    time.sleep(random.uniform(2.5, 3.5))  # Mimic human delay
+                    break  # Exit loop once successful
+            else:
+                logging.warning(f"🚫 'find_match.png' not found on attempt {attempt + 1}, retrying...")
+                time.sleep(1)  # Short delay before retrying
+
+        # Step 3: If "find_match.png" was NOT found, retry clicking "attack_button.png" after 3 failed attempts
+        if not find_match_clicked:
+            logging.info("🔄 'find_match.png' not found, retrying 'attack_button.png' to reopen the menu")
+            self.image.find_and_click_image(self.adb, self.image_folder, "attack_button.png", confidence_threshold=0.6)
+            time.sleep(2)  # Give time for UI to update
+
+            # Final check for "find_match.png"
+            logging.info("🔍 Final attempt to find 'find_match.png'...")
+            if self.image.detect_image(self.adb, self.image_folder, "find_match.png"):
+                self.image.find_and_click_image(self.adb, self.image_folder, "find_match.png", confidence_threshold=0.6)
+                logging.info("✅ Successfully clicked 'find_match.png' on final attempt")
+                find_match_clicked = True
+                time.sleep(2)  # Extra wait for stability
+
+        # Step 4: Only wait & click "end_battle.png" if "find_match.png" was successfully clicked
+        if find_match_clicked:
+            logging.info("⏳ Waiting 2 seconds before checking for 'end_battle.png'...")
+            time.sleep(2)
+
+            if self.image.find_and_click_image(self.adb, self.image_folder, "end_battle.png", confidence_threshold=0.7):
+                logging.info("✅ Successfully clicked 'end_battle.png'")
                 time.sleep(random.uniform(1, 2))  # Mimic human delay
             else:
-                logging.info(f"⏭️ {button} not found or could not be clicked")
+                logging.warning("⏭️ 'end_battle.png' not found or could not be clicked")
+        else:
+            logging.error("❌ 'find_match.png' could not be found after multiple attempts. Skipping end battle.")
+
+        # Final short delay to ensure UI stability
+        logging.info("⏳ Waiting for UI stabilization...")
+        time.sleep(2)
 
     def collect_resources(self):
         """Collect resources by clicking on resource icons."""
@@ -105,7 +145,7 @@ class StartingSequence:
             return False
             
         # Check for home screen indicators
-        for marker in ["home_anker.png", "home_marker.png"]:
+        for marker in ["home_anker.png"]:
             if self.image.detect_image(self.adb, self.image_folder, marker):
                 logging.info(f"✅ Home screen detected using {marker}")
                 return True
@@ -133,8 +173,7 @@ class StartingSequence:
             buttons = [
                 "close.png",
                 "back_anchor.png", 
-                "cancel_button.png",
-                "home_button.png"
+                "back_anchor.png",
             ]
             
             clicked = False

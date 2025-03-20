@@ -1,16 +1,54 @@
-# coc_bot_personal
-fully automated and working currently on 20 Mar 2025 handel everything correctly. recommended traning potions. can preform 10 to 15 attacks in 1hr of traning boost.90% attacks is successful.attack only fail due to th being higher than you.
-# Army composition 
-(best for 50% or i say one starts)
-super minions 25
-rage spells 5
-freeze spell 1
-# caution 
-*it may not work on your device due to i am using cv2 for image detection that does not work well on different screen sizes or if button and ui scaled.
-*army's deployment is based on predefined cordinates of screen so it need to be updated if want to use other devices.
-*initial setup 
-(open game just dont click any thing and run the script on connected device )
-*on mobile you have to enable usb debugging and devloper options and adb working on device.
-+script will automatically center screen.
+# CoC Bot Personal
+
+A fully automated Clash of Clans bot that handles everything efficiently, including army training, spell management, and attacking. It is optimized to perform 10–15 attacks per hour during a training boost, with a 90% success rate. Attack failures usually occur only against higher-level Town Halls.
+
+# Features
+
+Fully automated: Manages training, army deployment, and attacks.
+
+Optimized for Training Potions: Maximizes attacks during boost time.
+
+High success rate: 90% of attacks secure at least one star.
+
+Screen centering: The script automatically aligns the game screen for accurate execution.
 
 
+# Army Composition
+
+This setup is best for achieving 50% destruction or securing one star:
+
+Super Minions × 25
+
+Rage Spells × 5
+
+Freeze Spell × 1
+
+
+# ⚠️ Caution
+
+Device Compatibility: The bot relies on cv2 (OpenCV) for image detection, which may not work correctly on different screen sizes or if UI scaling is changed.
+
+Predefined Deployment: Army deployment is based on specific screen coordinates. You may need to update them to use this bot on other devices.
+
+
+Initial Setup
+
+# 1️⃣ Prerequisites
+
+USB Debugging & Developer Options: Enable these on your mobile device.
+
+ADB (Android Debug Bridge): Ensure ADB is installed and working on your system.
+
+
+# 2️⃣ How to Run
+
+1. Open Clash of Clans but do not interact with the game.
+
+
+2. Connect your device via USB.
+
+
+3. Run the script on your computer.
+
+
+4. The bot will automatically center the screen and start working.

@@ -73,7 +73,9 @@ class AttackSequence:
                         logging.info("✅ Clicked claim reward button")
 
                     # Perform additional clicks at predefined location (1240, 330)
+                    time.sleep(3)
                     for _ in range(5):
+                        time.sleep(1)
                         self.adb.humanlike_click(1240, 330)
 
                     # Now wait for "continue.png" to appear and click it
@@ -294,7 +296,7 @@ class AttackSequence:
         ]
 
         spell_locations = [(388, 272), (494, 395), (583, 205), (636, 395), (632, 542)]
-        ice_spell_locations = [(583, 205)]
+        ice_spell_locations = [(789, 345)]
         hero_locations = [(149, 320), (194, 379), (214, 261), (157, 325)]
 
         # Deploy troops
@@ -308,6 +310,7 @@ class AttackSequence:
                 self.deploy_units(hero_name, [hero_locations[i]])
 
         # Deploy spells
+        time.sleep(3)
         logging.info("Deploying spells...")
         self.deploy_units("rage_spell", spell_locations)
         logging.info("Deploying ice spell...")

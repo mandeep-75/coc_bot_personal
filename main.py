@@ -38,6 +38,7 @@ def main():
 
     try:
         while True:
+            start_sequence.navigate_to_home()
             # First collect resources and center screen
             logging.info("Starting resource collection...")
             if start_sequence.collect_resources():
@@ -45,13 +46,17 @@ def main():
             else:
                 logging.warning("⚠️ Resource collection had issues")
 
+          
             start_sequence.navigate_to_home()
+
 
             # Simplify to just run the attack cycles
             logging.info("\nStarting attack cycles...")
             attack_sequence.end_battle_and_continue(loop_count=1)
 
+
             start_sequence.navigate_to_home()
+
 
             # Then train troops
             logging.info("Starting troop training...")
@@ -62,6 +67,7 @@ def main():
 
             start_sequence.navigate_to_home()
 
+            # Wait for troops to get ready
             if check_train_army.check_army_state():
                 logging.info("✅ Army is fully trained")
             else:
